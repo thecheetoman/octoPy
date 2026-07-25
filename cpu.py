@@ -242,6 +242,8 @@ class Chip8:
                 # FX65: read registers V0 through Vx from memory starting at index address I
                 for idx in range(x + 1):
                     self.v[idx] = self.memory[self.i + idx]
+            else:
+                raise Exception(f"Unknown opcode: {opcode:04X}")
 
     def update_timers(self):
         # update timers. this script doesnt do this though the gui app will.... eventually... when i remember to make it... if i remmeber to make it...
