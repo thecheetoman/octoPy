@@ -51,63 +51,133 @@ def get_example_roms():
     
     return [os.path.join(rom_folder, f) for f in os.listdir(rom_folder) if f.endswith(".ch8")]
 
+def get_test_roms():
+    # get test roms for testing emu, keeps them nice and seperate
+    test_folder = "testroms"
+    if not os.path.exists(test_folder):
+        os.makedirs(test_folder)
+    
+    return [os.path.join(test_folder, f) for f in os.listdir(test_folder) if f.endswith(".ch8")]
+
 def run_menu(screen, font, cycles_per_frame):
-    # le config menu on boot
+    # le menu
     examples = get_example_roms()
+    test_roms = get_test_roms()
+    
+    # build a flat list for smooth arrow-key navigation
+    menu_items = []
+    for path in examples:
+        menu_items.append({'type': 'example', 'path': path, 'label': os.path.basename(path)})
+    menu_items.append({'type': 'custom', 'label': 'Open Custom File...'})
+    for path in test_roms:
+        menu_items.append({'type': 'test', 'path': path, 'label': os.path.basename(path)})
+    menu_items.append({'type': 'config', 'label': 'Configuration'})
+
     selected_idx = 0
-    # menu items: list of example ROMs + 1 settinges option
-    total_options = len(examples) + 1  
+    total_options = len(menu_items)
 
     while True:
         screen.fill((20, 20, 30))
         
         # header
         title = font.render("--- OctoPy MAIN MENU ---", True, (255, 255, 255))
-        screen.blit(title, (width // 2 - title.get_width() // 2, 30))
+        screen.blit(title, (width // 2 - title.get_width() // 2, 20))
 
-        sub = font.render("UP/DOWN: Navigate | ENTER: Select ROM", True, (180, 180, 180))
-        screen.blit(sub, (width // 2 - sub.get_width() // 2, 65))
+        sub = font.render("UP/DOWN: Navigate | ENTER: Select | ESC: Pause/Menu", True, (180, 180, 180))
+        screen.blit(sub, (width // 2 - sub.get_width() // 2, 50))
 
-        # le rom selector
-        y = 110
-        section_title = font.render("Select ROM:", True, (0, 255, 128))
-        screen.blit(section_title, (80, y))
-        y += 30
+        # le roms and config
+        x_left = 50
+        y = 90
+
+        # roms
+        screen.blit(font.render("Example ROMs:", True, (0, 255, 128)), (x_left, y))
+        y += 25
 
         if not examples:
-            no_roms = font.render("No .ch8 files found in 'roms/' folder.", True, (255, 100, 100))
-            screen.blit(no_roms, (100, y))
-            y += 30
+            screen.blit(font.render("  (No .ch8 in 'roms/')", True, (140, 140, 140)), (x_left + 15, y))
+            y += 25
+        else:
+            for idx, item in enumerate(menu_items):
+                if item['type'] == 'example':
+                    color = (255, 200, 0) if idx == selected_idx else (255, 255, 255)
+                    prefix = "> " if idx == selected_idx else "  "
+                    screen.blit(font.render(f"{prefix}{item['label']}", True, color), (x_left + 15, y))
+                    y += 25
+        
+        # custom rom file 
+        custom_idx = [i for i, item in enumerate(menu_items) if item['type'] == 'custom'][0]
+        color = (255, 200, 0) if selected_idx == custom_idx else (200, 200, 255)
+        prefix = "> " if selected_idx == custom_idx else "  "
+        screen.blit(font.render(f"{prefix}{menu_items[custom_idx]['label']}", True, color), (x_left, y))
+        y += 26
+        y += 10
 
-        for idx, rom_path in enumerate(examples):
-            color = (255, 200, 0) if idx == selected_idx else (255, 255, 255)
-            prefix = "> " if idx == selected_idx else "  "
-            text = font.render(f"{prefix}{os.path.basename(rom_path)}", True, color)
-            screen.blit(text, (100, y))
-            y += 30
+        # test roms
+        screen.blit(font.render("Emulator test ROMS:", True, (0, 200, 255)), (x_left, y))
+        y += 25
+
+        if not test_roms:
+            screen.blit(font.render("  (No .ch8 in 'testroms/')", True, (140, 140, 140)), (x_left + 15, y))
+            y += 25
+        else:
+            for idx, item in enumerate(menu_items):
+                if item['type'] == 'test':
+                    color = (255, 200, 0) if idx == selected_idx else (255, 255, 255)
+                    prefix = "> " if idx == selected_idx else "  "
+                    screen.blit(font.render(f"{prefix}{item['label']}", True, color), (x_left + 15, y))
+                    y += 25
+
+        y += 10
 
         # config
-        y += 15
-        config_title = font.render("Configuration:", True, (0, 255, 128))
-        screen.blit(config_title, (80, y))
-        y += 30
+        screen.blit(font.render("Configuration:", True, (255, 128, 0)), (x_left, y))
+        y += 25
 
-        config_idx = len(examples)
+        config_idx = len(menu_items) - 1
         is_config_selected = (selected_idx == config_idx)
-        
         color = (255, 200, 0) if is_config_selected else (255, 255, 255)
         prefix = "> " if is_config_selected else "  "
         
         cfg_text = font.render(
-            f"{prefix}Instructions / Frame: < {cycles_per_frame} >  (LEFT/RIGHT to adjust)", 
+            f"{prefix}Speed: < {cycles_per_frame} > per frame", 
             True, 
             color
         )
-        screen.blit(cfg_text, (100, y))
+        screen.blit(cfg_text, (x_left + 15, y))
+
+        #tuff keyboard panel
+        x_right = 530
+        y_ctrl = 90
+
+        # draw a vertical divider line down the middle
+        pygame.draw.line(screen, (60, 60, 80), (500, 85), (500, height - 30), 2)
+
+        screen.blit(font.render("KEYPAD MAPPING", True, (255, 200, 0)), (x_right, y_ctrl))
+        y_ctrl += 30
+
+        # display kets
+        keypad_layout = [
+            " CHIP-8      Keyboard",
+            "┌───┬───┬───┬───┐",
+            "│ 1 │ 2 │ 3 │ C │ -> 1 2 3 4",
+            "├───┼───┼───┼───┤",
+            "│ 4 │ 5 │ 6 │ D │ -> Q W E R",
+            "├───┼───┼───┼───┤",
+            "│ 7 │ 8 │ 9 │ E │ -> A S D F",
+            "├───┼───┼───┼───┤",
+            "│ A │ 0 │ B │ F │ -> Z X C V",
+            "└───┴───┴───┴───┘"
+        ]
+
+        for line in keypad_layout:
+            line_surface = font.render(line, True, (200, 200, 220))
+            screen.blit(line_surface, (x_right, y_ctrl))
+            y_ctrl += 22
 
         pygame.display.flip()
 
-        # handle Menu Events
+        # menu event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -119,24 +189,25 @@ def run_menu(screen, font, cycles_per_frame):
                 elif event.key == pygame.K_DOWN:
                     selected_idx = (selected_idx + 1) % total_options
                 
-                # adjust cycles per frame when config setting is highlighted
+                # adjust speed with left right if on that thing
                 elif is_config_selected:
                     if event.key == pygame.K_LEFT:
                         cycles_per_frame = max(1, cycles_per_frame - 1)
                     elif event.key == pygame.K_RIGHT:
                         cycles_per_frame = min(100, cycles_per_frame + 1)
 
-                # Select ROM
+                # launch with the selected ROM
                 if event.key in (pygame.K_RETURN, pygame.K_SPACE):
-                    if selected_idx < len(examples):
-                        return examples[selected_idx], cycles_per_frame
+                    current_item = menu_items[selected_idx]
+                    if current_item['type'] in ('example', 'test'):
+                        return current_item['path'], cycles_per_frame
 
 
 def main():
     pygame.init()
     pygame.mixer.init(frequency=44100, size=-16, channels=2)
     screen = pygame.display.set_mode((width, height))
-    pygame.display.set_caption("CHIP-8 Emulator")
+    pygame.display.set_caption("OctoPy")
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("monospace", 16, bold=True)
     beep = generateBeep()
