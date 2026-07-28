@@ -107,9 +107,12 @@ def run_menu(screen, font, cycles_per_frame):
         
         # custom rom file 
         custom_idx = [i for i, item in enumerate(menu_items) if item['type'] == 'custom'][0]
-        color = (255, 200, 0) if selected_idx == custom_idx else (200, 200, 255)
-        prefix = "> " if selected_idx == custom_idx else "  "
-        screen.blit(font.render(f"{prefix}{menu_items[custom_idx]['label']}", True, color), (x_left, y))
+        is_custom_selected = (selected_idx == custom_idx)
+        color = (255, 200, 0) if is_custom_selected else (255, 255, 255)
+        prefix = "> " if is_custom_selected else "  "
+
+        label_text = font.render(f"{prefix}{menu_items[custom_idx]['label']}", True, color)
+        screen.blit(label_text, (x_left + 15, y))
         y += 26
         y += 10
 
@@ -140,7 +143,7 @@ def run_menu(screen, font, cycles_per_frame):
         prefix = "> " if is_config_selected else "  "
         
         cfg_text = font.render(
-            f"{prefix}Speed: < {cycles_per_frame} > per frame", 
+            f"{prefix}Instructions: < {cycles_per_frame} > per frame", 
             True, 
             color
         )
