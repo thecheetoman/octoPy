@@ -236,8 +236,9 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
+            # main.py inside the running loop event handling:
+
             elif event.type == pygame.KEYDOWN:
-                # Return to menu to swap ROM or change speed
                 if event.key in (pygame.K_ESCAPE, pygame.K_F1):
                     rom_path, cycles_per_frame = run_menu(screen, font, cycles_per_frame)
                     cpu = Chip8()
@@ -246,14 +247,21 @@ def main():
                 elif event.key in KEY_MAP:
                     key = KEY_MAP[event.key]
                     cpu.keypad[key] = True
-                    if cpu.waiting_for_key:
-                        cpu.v[cpu.key_target_register] = key
-                        cpu.waiting_for_key = False
+                    
+                    # if waiting for key input, record which key was pressed down
+                    if cpu.waiting_for_key and cpu.released_key_wait is None:
+                        cpu.released_key_wait = key
 
             elif event.type == pygame.KEYUP:
                 if event.key in KEY_MAP:
                     key = KEY_MAP[event.key]
                     cpu.keypad[key] = False
+
+                    # Only unblock execution when the pressed key is RELEASED
+                    if cpu.waiting_for_key and cpu.released_key_wait == key:
+                        cpu.v[cpu.key_target_register] = key
+                        cpu.waiting_for_key = False
+                        cpu.released_key_wait = None
 
         # Execute configured cycles per frame
         for _ in range(cycles_per_frame):

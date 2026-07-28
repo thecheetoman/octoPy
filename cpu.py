@@ -35,6 +35,7 @@ class Chip8:
         # key wait state, this is used in instruction FX0A, which pauses the cpu until something is pressed
         self.waiting_for_key = False
         self.key_target_register = 0
+        self.released_key_wait = None # track the key we waitin for
 
         # Load font sprites into memory reserve area starting at address 0x050.
         # load font sprites into the memory, starting at the address of 0x050 
