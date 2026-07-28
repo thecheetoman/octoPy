@@ -199,8 +199,14 @@ def run_menu(screen, font, cycles_per_frame):
                 # launch with the selected ROM
                 if event.key in (pygame.K_RETURN, pygame.K_SPACE):
                     current_item = menu_items[selected_idx]
+
                     if current_item['type'] in ('example', 'test'):
                         return current_item['path'], cycles_per_frame
+
+                    elif current_item['type'] == 'custom':
+                        filepath = open_file_dialog()
+                        if filepath:  # user didn't cancel
+                            return filepath, cycles_per_frame
 
 
 def main():
