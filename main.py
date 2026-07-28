@@ -2,8 +2,14 @@ import sys, os
 import pygame
 import numpy as np
 from cpu import Chip8
-import tkinter as tk
-from tkinter import filedialog
+import asyncio
+
+try:
+    import tkinter as tk
+    from tkinter import filedialog
+except Exception:
+    tk = None
+    filedialog = None
 
 # CONFIGUREATION i dont know how to spell
 scale = 15                          # scale pixel size up (64x32 -> 960x480 resolution)
@@ -68,7 +74,8 @@ def run_menu(screen, font, cycles_per_frame):
     menu_items = []
     for path in examples:
         menu_items.append({'type': 'example', 'path': path, 'label': os.path.basename(path)})
-    menu_items.append({'type': 'custom', 'label': 'Open Custom File...'})
+    if tk is not None and filedialog is not None:
+        menu_items.append({'type': 'custom', 'label': 'Open Custom File...'})
     for path in test_roms:
         menu_items.append({'type': 'test', 'path': path, 'label': os.path.basename(path)})
     menu_items.append({'type': 'config', 'label': 'Configuration'})
@@ -207,12 +214,13 @@ def run_menu(screen, font, cycles_per_frame):
                         return current_item['path'], cycles_per_frame
 
                     elif current_item['type'] == 'custom':
-                        filepath = open_file_dialog()
-                        if filepath:  # user didn't cancel
-                            return filepath, cycles_per_frame
+                        if tk is not None and filedialog is not None:
+                            filepath = open_file_dialog()
+                            if filepath:  # user didn't cancel
+                                return filepath, cycles_per_frame
 
 
-def main():
+async def main():
     pygame.init()
     pygame.mixer.init(frequency=44100, size=-16, channels=2)
     screen = pygame.display.set_mode((width, height))
@@ -286,8 +294,9 @@ def main():
 
         pygame.display.flip()
         clock.tick(60)
+        await asyncio.sleep(0)
 
     pygame.quit()
 
 if __name__ == "__main__":
-    main()        
+    asyncio.run(main())      
